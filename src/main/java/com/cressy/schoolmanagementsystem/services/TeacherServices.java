@@ -11,6 +11,7 @@ import java.util.Optional;
 
 public interface TeacherServices {
     TeacherResponse assignTeacherToClasses(Long teacherId, List<Long> classIds);
+    void removeTeacherFromClass(Long teacherId, List<Long> classIds);
     TeacherResponse assignTeacherToSubjects(Long teacherId, List<Subjects> subjects);
     TeacherResponse registerTeacher(TeacherRequest teacherRequest);
     Optional<TeacherResponse> getTeacherById(Long id);
@@ -22,7 +23,7 @@ public interface TeacherServices {
     TaskDto updateTask(Long id, TaskDto taskDto);
     List<TaskDto> searchTaskByTitle(String title);
     List<TaskDto> getTaskByTaskClassId(Long classId);
-    void deleteTeacher(Long id);
+    String deleteTeacher(Long id);
     TeacherResponse updateTeacher(Long id, TeacherRequest teacherRequest);
     List<StudentResponse> getAllStudentsByClassName(String className);
 

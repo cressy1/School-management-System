@@ -28,7 +28,7 @@ public class Comments extends BaseEntity{
     @ManyToOne
     @JoinColumn(name = "teacher_id")
     @JsonBackReference(value = "teacher-comments")
-    private Teachers teacher;
+    private Teachers teachers;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)

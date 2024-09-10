@@ -19,7 +19,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "Teacher")
+@Table
 public class Teachers extends BaseEntity{
     private String firstName;
     private String lastName;
@@ -38,7 +38,7 @@ public class Teachers extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private ClassCategory classCategory;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "teacher_school_classes",
             joinColumns = @JoinColumn(name = "teacher_id"),
@@ -52,7 +52,7 @@ public class Teachers extends BaseEntity{
     @Column(name = "subject")
     private Set<Subjects> subjectsList = new HashSet<>();
 
-    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "teachers", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "teacher-comments") // Prevents infinite loop during serialization
     private List<Comments> comments = new ArrayList<>();
 }

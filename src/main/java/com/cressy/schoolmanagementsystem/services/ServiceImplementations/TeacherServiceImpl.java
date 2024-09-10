@@ -18,6 +18,7 @@ import com.cressy.schoolmanagementsystem.repository.StudentRepository;
 import com.cressy.schoolmanagementsystem.repository.TaskRepository;
 import com.cressy.schoolmanagementsystem.repository.TeacherRepository;
 import com.cressy.schoolmanagementsystem.services.TeacherServices;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -77,16 +78,23 @@ public class TeacherServiceImpl implements TeacherServices {
         Teachers teachers = teacherRepository.findById(teacherId).orElseThrow(()->
                 new TeacherNotFoundException("Teacher with " + teacherId + " not found"));
 
+        Set<SchoolClasses> existingClasses = teachers.getSchoolClasses();
         Set<SchoolClasses> classes = new HashSet<>();
         for (Long classId : classIds) {
             SchoolClasses schoolClasses = schoolClassesRepository.findById(classId).orElseThrow(()->
                     new SchoolClassNotFoundException("Class with classId: " + classId + " not found"));
-            classes.add(schoolClasses);
 
+            // Check if the teacher is already assigned to this class
+            if (existingClasses.contains(schoolClasses)) {
+                throw new IllegalStateException("This teacher is already assigned to " + schoolClasses.getClassName());
+            }
+            classes.add(schoolClasses);
             schoolClasses.getTeachers().add(teachers);
+            schoolClasses.setTeacherCount(schoolClasses.getTeacherCount() + 1);
         }
 
-        teachers.setSchoolClasses(classes);
+        existingClasses.addAll(classes);
+        teachers.setSchoolClasses(existingClasses);
         Teachers updatedTeacher = teacherRepository.save(teachers);
 
         return TeacherResponse.builder()
@@ -104,6 +112,46 @@ public class TeacherServiceImpl implements TeacherServices {
                         SchoolClasses::getClassName).collect(Collectors.joining(", ")))
                 .classCategory(updatedTeacher.getClassCategory().toString())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void removeTeacherFromClass(Long teacherId, List<Long> classIds) {
+        Teachers teachers = teacherRepository.findById(teacherId).orElseThrow(()->
+                new TeacherNotFoundException("Teacher with " + teacherId + " not found"));
+
+        Set<SchoolClasses> classesToRemove = new HashSet<>();
+        for (Long classId : classIds) {
+            SchoolClasses schoolClasses = schoolClassesRepository.findById(classId).orElseThrow(()->
+                    new SchoolClassNotFoundException("Class with classId: " + classId + " not found"));
+
+            // Check if the teacher is assigned to the class
+            if (schoolClasses.getTeachers().contains(teachers)) {
+                // Remove the teacher from the class
+                schoolClasses.getTeachers().remove(teachers);
+                // Add class to the list of classes to be saved
+                classesToRemove.add(schoolClasses);
+
+                // Remove the class from the teacher's list of classes
+                teachers.getSchoolClasses().remove(schoolClasses);
+
+                // Decrement the teacher count
+                schoolClasses.setTeacherCount(schoolClasses.getTeacherCount() - 1);
+
+            } else {
+                throw new IllegalStateException("Teacher with ID: "
+                        + teacherId + " is already removed from "
+                        + schoolClasses.getClassName());
+            }
+        }
+        // Save the updated teacher entity
+        teacherRepository.save(teachers);
+
+        // Save the updated classes
+        schoolClassesRepository.saveAll(classesToRemove);
+//        schoolClassesRepository.saveAll(classIds.stream()
+//                .map(classId -> schoolClassesRepository.findById(classId).get())
+//                .collect(Collectors.toList()));
     }
 
     @Override
@@ -224,8 +272,18 @@ public class TeacherServiceImpl implements TeacherServices {
     }
 
     @Override
-    public void deleteTeacher(Long id) {
-        teacherRepository.deleteById(id);
+    public String deleteTeacher(Long id) {
+        Teachers teacher = teacherRepository.findTeacherById(id)
+                .orElseThrow(() -> new TeacherNotFoundException("Teacher with ID number: " + id + " not found"));
+        // Remove teacher from all associated classes
+        for (SchoolClasses schoolClass : teacher.getSchoolClasses()) {
+            schoolClass.getTeachers().remove(teacher);
+
+            schoolClass.setTeacherCount(schoolClass.getTeacherCount() - 1);
+
+        }
+        teacherRepository.deleteById(teacher.getId());
+        return teacher.getFirstName() + " " + teacher.getLastName() + " deleted successfully";
     }
 
     @Override
@@ -291,6 +349,12 @@ public class TeacherServiceImpl implements TeacherServices {
     }
 
     private TeacherResponse mapToTeacherResponse(Teachers teachers) {
+        // Convert the set of SchoolClasses to a set of class names
+        Set<String> classNames = teachers.getSchoolClasses()
+                .stream()
+                .map(SchoolClasses::getClassName)
+                .collect(Collectors.toSet());
+
         return TeacherResponse.builder()
                 .firstName(teachers.getFirstName())
                 .lastName(teachers.getLastName())
@@ -300,7 +364,7 @@ public class TeacherServiceImpl implements TeacherServices {
                 .teacherType(teachers.getType().toString())
                 .qualification(teachers.getQualification())
                 .roles(teachers.getRoles().toString())
-                .className(teachers.getSchoolClasses().toString())
+                .className(classNames.toString())
                 .classCategory(teachers.getClassCategory().toString())
                 .subjects(teachers.getSubjectsList().toString())
                 .build();

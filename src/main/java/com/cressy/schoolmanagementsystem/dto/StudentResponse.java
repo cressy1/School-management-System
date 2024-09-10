@@ -21,5 +21,7 @@ public class StudentResponse {
     private String className;
     private String classType;
     private String category;
+    private int numberOfStudentsInClass;
+    private int numberOfTeachersInClass;
 
 }

@@ -16,6 +16,7 @@ import com.cressy.schoolmanagementsystem.repository.StudentRepository;
 import com.cressy.schoolmanagementsystem.repository.TaskRepository;
 import com.cressy.schoolmanagementsystem.services.StudentServices;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -73,12 +74,26 @@ public class StudentServiceImpl implements StudentServices {
         SchoolClasses schoolClasses = schoolClassesRepository.findById(classId)
                 .orElseThrow(() -> new SchoolClassNotFoundException("Class Not Found"));
 
+        if (students.getSchoolClasses() != null
+                && students.getSchoolClasses().getId().equals(classId)){
+            throw new StudentAlreadyExistsException("This student is already assigned to this class");
+        }
+
+        if (students.getSchoolClasses() != null
+                && !students.getSchoolClasses().getId().equals(classId)) {
+            throw new StudentAlreadyExistsException("This student is already assigned to " + schoolClasses.getClassName()
+                    + " .you must remove student from that class before reassigning to another class.");
+        }
+
         students.setSchoolClasses(schoolClasses);
         students.setClassName(schoolClasses.getClassName());
         students.setClassType(String.valueOf(schoolClasses.getClassType()));
         students.setCategory(String.valueOf(schoolClasses.getClassCategory()));
 
+        schoolClasses.setStudentCount(schoolClasses.getStudentCount() + 1);
+
         Students updatedStudent = studentRepository.save(students);
+        SchoolClasses updatedSchoolClass = schoolClassesRepository.save(schoolClasses);
 
         return StudentResponse.builder()
                 .firstName(updatedStudent.getFirstName())
@@ -90,7 +105,28 @@ public class StudentServiceImpl implements StudentServices {
                 .classType(updatedStudent.getClassType())
                 .category(updatedStudent.getCategory())
                 .studentRole(updatedStudent.getRoles().toString())
+                .numberOfStudentsInClass(updatedSchoolClass.getStudentCount())
                 .build();
+    }
+
+    @Override
+    public void removeStudentFromClass(String studentNumber, Long classId) {
+        Students students = studentRepository.findByStudentNumber(studentNumber).orElseThrow(
+                ()-> new StudentNotFoundException("Student not found")
+        );
+        SchoolClasses schoolClasses = schoolClassesRepository.findById(classId).orElseThrow(
+                ()-> new SchoolClassNotFoundException("This class does not exists")
+        );
+
+        if (students.getSchoolClasses() == null || !students.getSchoolClasses().getId().equals(classId)){
+            throw new IllegalStateException("Student already removed from this class");
+        }
+
+        students.setSchoolClasses(null);
+        schoolClasses.setStudentCount(schoolClasses.getStudentCount() - 1);
+
+        studentRepository.save(students);
+        schoolClassesRepository.save(schoolClasses);
     }
 
     @Override
@@ -155,8 +191,32 @@ public class StudentServiceImpl implements StudentServices {
     }
 
     @Override
-    public void deleteStudent(String studentNumber) {
-        studentRepository.deleteByStudentNumber(studentNumber);
+    @Transactional
+    public String  deleteStudent(String studentNumber) {
+        Students student = studentRepository.findByStudentNumber(studentNumber)
+                .orElseThrow(() -> new StudentNotFoundException("Student with student number " + studentNumber + " not found"));
+
+        // Fetch the school class associated with the student
+        SchoolClasses schoolClasses = student.getSchoolClasses();
+
+        // Check if the student is assigned to a class
+        if (schoolClasses != null) {
+            // Remove the student from the class
+            schoolClasses.getStudents().remove(student);
+
+            // Decrement the student count in the class
+            if (schoolClasses.getStudentCount() > 0) {
+                schoolClasses.setStudentCount(schoolClasses.getStudentCount() - 1);
+            }
+
+            // Save the updated school class
+            schoolClassesRepository.save(schoolClasses);
+        }
+
+        // Delete the student from the repository
+        studentRepository.delete(student);
+
+        return student.getFirstName() + " " + student.getLastName() + " deleted successfully";
     }
 
     @Override

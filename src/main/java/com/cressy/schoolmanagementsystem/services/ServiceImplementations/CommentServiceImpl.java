@@ -49,7 +49,7 @@ public class CommentServiceImpl implements CommentService {
         Teachers teachers = teacherRepository.findTeacherById(teacherId).orElseThrow(()-> new TeacherNotFoundException("Teacher not found."));
         Comments comments = new Comments();
         comments.setContent(content);
-        comments.setTeacher(teachers);
+        comments.setTeachers(teachers);
         comments.setTask(task);
 
         Comments savedComment = commentRepository.save(comments);
@@ -76,8 +76,8 @@ public class CommentServiceImpl implements CommentService {
             dto.setContent(comment.getContent());
             if (comment.getStudent() != null) {
                 dto.setPostedBy(comment.getStudent().getFirstName() + " " + comment.getStudent().getLastName());
-            } else if (comment.getTeacher() != null) {
-                dto.setPostedBy(comment.getTeacher().getFirstName() + " " + comment.getTeacher().getLastName());
+            } else if (comment.getTeachers() != null) {
+                dto.setPostedBy(comment.getTeachers().getFirstName() + " " + comment.getTeachers().getLastName());
             }
             return dto;
         }).toList();

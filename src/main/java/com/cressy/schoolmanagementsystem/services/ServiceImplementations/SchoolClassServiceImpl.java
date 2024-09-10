@@ -43,6 +43,8 @@ public class SchoolClassServiceImpl implements SchoolClassServices {
                 .classType(newClass.getClassType().toString())
                 .classCategory(newClass.getClassCategory().toString())
                 .subjects(newClass.getSubjects())
+                .numberOfStudentsInClass(newClass.getStudentCount())
+                .numberOfTeachersInClass(newClass.getTeacherCount())
                 .build();
     }
 

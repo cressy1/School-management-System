@@ -17,6 +17,8 @@ import java.util.Set;
 @Table(name = "classes")
 public class SchoolClasses extends BaseEntity{
     private String className;
+    private int studentCount;
+    private int teacherCount;
 
     @Enumerated(EnumType.STRING)
     private ClassType classType;
@@ -24,7 +26,7 @@ public class SchoolClasses extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private ClassCategory classCategory;
 
-    @OneToMany(mappedBy = "schoolClasses", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "schoolClasses", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     private Set<Students> students;
 
     @ElementCollection(targetClass = Subjects.class)

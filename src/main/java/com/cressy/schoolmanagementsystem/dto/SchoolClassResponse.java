@@ -17,6 +17,8 @@ public class SchoolClassResponse {
     private Long id;
     private String className;
     private String classType;
+    private int numberOfStudentsInClass;
+    private int numberOfTeachersInClass;
     private String classCategory;
     private Set<Subjects> subjects;
 

@@ -9,12 +9,13 @@ public interface StudentServices {
     StudentResponse registerStudent(StudentRequest studentRequest);
 
     StudentResponse assignStudentToClass(String studentNumber, Long classId);
+    void removeStudentFromClass(String studentNumber, Long classId);
     String generateStudentNumber();
     List<StudentResponse> getAllStudents();
     Optional<StudentResponse> findByStudentNumber(String studentNumber);
     List<TaskDto> getTaskByTaskClassId(Long classId);
     TaskDto updateTaskStatus(Long id, String status);
-    void deleteStudent(String studentNumber);
+    String  deleteStudent(String studentNumber);
     StudentResponse updateStudent(String studentNumber, StudentRequest studentRequest);
 
 }

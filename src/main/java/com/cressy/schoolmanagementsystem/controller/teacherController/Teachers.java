@@ -5,6 +5,8 @@ import com.cressy.schoolmanagementsystem.dto.TaskDto;
 import com.cressy.schoolmanagementsystem.dto.TeacherRequest;
 import com.cressy.schoolmanagementsystem.dto.TeacherResponse;
 import com.cressy.schoolmanagementsystem.enums.Subjects;
+import com.cressy.schoolmanagementsystem.exceptions.SchoolClassNotFoundException;
+import com.cressy.schoolmanagementsystem.exceptions.TeacherNotFoundException;
 import com.cressy.schoolmanagementsystem.services.TeacherServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -86,9 +88,9 @@ public class Teachers {
     }
 
     @DeleteMapping("/deleteTeacher/{id}")
-    public ResponseEntity<Void> deleteTeacher(@PathVariable Long id) {
-        teacherServices.deleteTeacher(id);
-        return ResponseEntity.ok(null);
+    public ResponseEntity<String> deleteTeacher(@PathVariable Long id) {
+        String deletedTeacher = teacherServices.deleteTeacher(id);
+        return new ResponseEntity<>(deletedTeacher, HttpStatus.OK);
     }
 
     @GetMapping("/getAllTeachers")
@@ -114,5 +116,20 @@ public class Teachers {
     public ResponseEntity<List<StudentResponse>> getAllStudentsByClassName(@RequestParam String className) {
        List<StudentResponse> allStudentsInAClass =teacherServices.getAllStudentsByClassName(className);
        return ResponseEntity.ok(allStudentsInAClass);
+    }
+
+    @DeleteMapping("/remove-teacher/{teacherId}")
+    public ResponseEntity<String> removeTeacherFromClas(@PathVariable Long teacherId,
+                                                        @RequestBody List<Long> classIds) {
+        try {
+            teacherServices.removeTeacherFromClass(teacherId, classIds);
+            return ResponseEntity.ok("Teacher removed from class successfully");
+        }catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }catch (TeacherNotFoundException | SchoolClassNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while removing the teacher from the class");
+        }
     }
 }

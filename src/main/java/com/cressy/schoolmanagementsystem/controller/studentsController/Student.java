@@ -1,7 +1,8 @@
 package com.cressy.schoolmanagementsystem.controller.studentsController;
 
 import com.cressy.schoolmanagementsystem.dto.*;
-import com.cressy.schoolmanagementsystem.entity.Students;
+import com.cressy.schoolmanagementsystem.exceptions.SchoolClassNotFoundException;
+import com.cressy.schoolmanagementsystem.exceptions.StudentNotFoundException;
 import com.cressy.schoolmanagementsystem.services.SchoolClassServices;
 import com.cressy.schoolmanagementsystem.services.StudentServices;
 import lombok.RequiredArgsConstructor;
@@ -35,15 +36,23 @@ public class Student {
     public ResponseEntity<StudentResponse> assignStudentToClass(@PathVariable("studentNumber") String studentNumber,
                                                                 @PathVariable("classId") Long classId) {
         StudentResponse studentResponse = studentServices.assignStudentToClass(studentNumber, classId);
-
         return new ResponseEntity<>(studentResponse, HttpStatus.OK);
     }
 
-//    @GetMapping("/classes/{className}")
-//    public ResponseEntity<List<StudentResponse>> getStudentsInClassesByClassName(@PathVariable("className") Long classId) {
-//        List<StudentResponse> students = studentServices.getAllStudentsByClass(classId);
-//        return new ResponseEntity<>(students, HttpStatus.OK);
-//    }
+    @DeleteMapping("/remove-student/{studentNumber}/{classId}")
+    public ResponseEntity<String> removeStudentFromClas(@PathVariable String studentNumber,
+                                                        @PathVariable Long classId) {
+        try {
+            studentServices.removeStudentFromClass(studentNumber, classId);
+            return ResponseEntity.ok("Student removed from class successfully");
+        }catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }catch (StudentNotFoundException | SchoolClassNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while removing the student from the class");
+        }
+    }
 
     @GetMapping("/all")
     ResponseEntity<List<StudentResponse>> getAllStudents(){
@@ -75,9 +84,9 @@ public class Student {
 //    }
 
     @DeleteMapping("/deleteStudent/{studentNumber}")
-    public ResponseEntity<Void> deleteStudent(@PathVariable String studentNumber) {
-        studentServices.deleteStudent(studentNumber);
-        return ResponseEntity.ok(null);
+    public ResponseEntity<String> deleteStudent(@PathVariable String studentNumber) {
+        String deleteStudent = studentServices.deleteStudent(studentNumber);
+        return new ResponseEntity<>(deleteStudent, HttpStatus.OK);
     }
     @PutMapping("/updateStudent/{studentNumber}")
     public ResponseEntity<StudentResponse> updateStudent(@PathVariable String studentNumber, @RequestBody StudentRequest studentRequest) {
@@ -87,9 +96,6 @@ public class Student {
         }
         return ResponseEntity.ok(updateStudent);
     }
-
-
-
     }
 
 
