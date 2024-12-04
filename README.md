@@ -1,4 +1,5 @@
 Overview
+
 The School Management System App is a comprehensive solution designed to streamline the management of students, teachers, and administrative tasks within a school. It provides a seamless interface for managing classes, assigning teachers and students, tracking tasks, generating timetables, and more. Built with Java Spring Boot, this system ensures a robust and scalable backend with RESTful APIs for effective integration with frontend applications.
 
 Features
