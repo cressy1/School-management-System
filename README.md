@@ -45,17 +45,16 @@ Installation and Setup
 Clone the Repository
 
 bash
-Copy code
 git clone https://github.com/cressy1/School-management-System.git
 cd school-management-system
 Configure Database
 Update the application.properties file with your database credentials:
 
 properties
-Copy code
-spring.datasource.url=jdbc:postgresql://localhost:5432/school_db
-spring.datasource.username=your_username
-spring.datasource.password=your_password
+spring.datasource.url=jdbc:mysql://localhost:3306/school
+spring.datasource.username=root
+spring.datasource.password=A12345badamashi
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 Run the Application
 Use Maven to build and run the application:
 
