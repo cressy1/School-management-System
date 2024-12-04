@@ -46,7 +46,7 @@ Clone the Repository
 
 bash
 Copy code
-git clone https://github.com/your-repo/school-management-system.git
+git clone https://github.com/cressy1/School-management-System.git
 cd school-management-system
 Configure Database
 Update the application.properties file with your database credentials:
